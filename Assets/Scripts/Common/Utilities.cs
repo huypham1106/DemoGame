@@ -20,4 +20,6 @@ public static class Utilities
         newColor.a = alphaValue / 255f; ;
         image.color = newColor;
     }
+
+     
 }
