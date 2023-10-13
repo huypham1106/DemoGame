@@ -15,7 +15,7 @@ public class Square : MonoBehaviour
     [SerializeField] public int indexSquare;
 
     private Action<Square> onClickSquare;
-
+    private MapItem newMapItem;
     public TypeSquare typeSquare;
 
     private void Awake()
@@ -40,8 +40,49 @@ public class Square : MonoBehaviour
 
         this.x = mapItem.x;
         this.y = mapItem.y;
+        mapItem.square = this;
         this.indexSquare = mapItem.indexMap;
         this.onClickSquare = onClickSquare;
+    }    
+
+    public void setNewData(MapItem mapItem, bool isNeedRandom = false)
+    {
+        this.gameObject.SetActive(true);
+        if (isNeedRandom)
+        {
+            int randomSprite = UnityEngine.Random.Range(0, sprites.Count);
+            setColorData(randomSprite);
+            imgSquare.sprite = sprites[randomSprite];
+        }
+        this.newMapItem = mapItem;
+        this.x = mapItem.x;
+        this.y = mapItem.y;
+        mapItem.square = this;
+        this.indexSquare = mapItem.indexMap;
+        
+    }   
+    
+    public void FallToMap(Vector3 initPos, float posY)
+    {
+        this.transform.DOMove(initPos, 0f).OnComplete(() =>
+        {
+            this.transform.DOScale(1f, 0f);
+            this.transform.DOLocalMoveY(posY, 0.5f).OnComplete(()=>
+            {
+                this.transform.SetParent(newMapItem.transform);
+                this.transform.localPosition = Vector3.zero;
+            });
+        });
+
+    }   
+    public void MoveToHole(MapItem mapItem)
+    {
+        this.transform.DOMove(mapItem.transform.position, 0.5f).OnComplete(() =>
+        {
+            this.transform.SetParent(mapItem.transform);
+            this.transform.localPosition = Vector3.zero;
+
+        });
     }    
 
     private void setColorData(int index)
