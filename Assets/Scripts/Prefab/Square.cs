@@ -28,7 +28,6 @@ public class Square : MonoBehaviour
     }
     private void Start()
     {
-        animErrorChoose(); 
     }
 
     public void InitData(MapItem mapItem, Action<Square> onClickSquare)
@@ -117,27 +116,36 @@ public class Square : MonoBehaviour
         imgSquare.sprite = spritesBooster[0];
         typeSquare = TypeSquare.Bomb;
         this.gameObject.SetActive(true);
-    }    
-
-    private void animErrorChoose()
-    {
-        sequence = DOTween.Sequence();
-        sequence.Append(transform.DOScale(0.8f, 0.05f)).OnComplete(() =>
-        {
-            sequence.Append(transform.DOScale(1.0f, 0.05f));
-        }).SetDelay(0.05f);
-        sequence.SetLoops(2);
     }
 
-    private IEnumerator PlaySequence()
+    bool isAnimating = false;
+    private void animErrorChoose()
     {
-        yield return new WaitForEndOfFrame();
-        sequence.Play();
+        if (isAnimating)
+        {
+            return;
+        }
+
+        isAnimating = true;
+
+        this.transform.DOScale(0.6f, 0.05f).OnComplete(() =>
+        {
+            this.transform.DOScale(1.0f, 0.05f).OnComplete(() =>
+            {
+                this.transform.DOScale(0.6f, 0.05f).OnComplete(() =>
+                {
+                    this.transform.DOScale(1f, 0.05f).OnComplete(() =>
+                    {
+                        isAnimating = false;
+                    });
+                });
+            });
+        });
     }
 
     public void setErrorChoose()
     {
-        StartCoroutine(PlaySequence());
+        animErrorChoose();
         SoundManager.I.PlaySFX(Global.SoundName.Hardest_Gameplay_false);
     }    
     private void onClickBtnSquare()

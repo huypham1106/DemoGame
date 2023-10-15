@@ -13,4 +13,4 @@ MonoBehaviour:
   m_Name: 5
   m_EditorClassIdentifier: 
   level: 5
-  targetScore: 7000
+  targetScore: 15000

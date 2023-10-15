@@ -17,6 +17,8 @@ public class GamePlayScene : MonoBehaviour
     [SerializeField] private InputField ifWidth;
     [SerializeField] private Button btnPlay;
     [SerializeField] private GameObject goCongigPopup;
+    private int minValue = 5;
+    private int maxValue = 9;
 
     [Header("GamePlay")]
     //[SerializeField] private Square square;
@@ -25,6 +27,10 @@ public class GamePlayScene : MonoBehaviour
     [SerializeField] private ObjectPool poolSquare;
     [SerializeField] private Transform goBanner;
     [SerializeField] private CanvasGroup canvasGroupMap;
+
+    [Header("ConfirmPopup")]
+    [SerializeField] private Button btnBack;
+    [SerializeField] private ConfirmPopup confirmPopup;
 
 
     [Header("Score")]
@@ -63,6 +69,9 @@ public class GamePlayScene : MonoBehaviour
         }
 
         btnPlay.onClick.AddListener(onClickPlay);
+        btnBack.onClick.AddListener(onClickBack);
+        ifHeight.onEndEdit.AddListener(OnEndEditHeight);
+        ifWidth.onEndEdit.AddListener(OnEndEditWidth);
 
     }
 
@@ -77,16 +86,16 @@ public class GamePlayScene : MonoBehaviour
         SoundManager.I.PlayMusic(Global.SoundName.Hardest_BGM61);
         goCongigPopup.SetActive(true);
         goBanner.gameObject.SetActive(false);
+        btnBack.gameObject.SetActive(false);
 
     }
     private IEnumerator readyGoAnim()
     {
         SoundManager.I.PlaySFX(Global.SoundName.Hardest_LV_ready_go);
-        isFilling = true;
         goReadyGo.SetActive(true);
         yield return new WaitForSeconds(2f);
         isFilling = false;
-        time.InitData(20, actionEndOfTime);
+        time.InitData(120, actionEndOfTime);
         goReadyGo.SetActive(false);
     }    
 
@@ -116,10 +125,12 @@ public class GamePlayScene : MonoBehaviour
     public void onClickPlay()
     {
         SoundManager.I.PlaySFX(Global.SoundName.Hardest_btn_pop);
+        isFilling = true;
         resetAll();
         loadMap();
         goCongigPopup.SetActive(false);
         goBanner.gameObject.SetActive(true);
+        btnBack.gameObject.SetActive(true);
         popupResult.transform.gameObject.SetActive(false);
         StartCoroutine(readyGoAnim());
         generateMap();
@@ -212,7 +223,6 @@ public class GamePlayScene : MonoBehaviour
 
     private void generateSquare()
     {
-        isFilling = true;
         for(int i = 0; i < mapItemsList.Count; i++)
         {
            var squareItem = poolSquare.GetPooledObject().GetComponent<Square>();
@@ -220,7 +230,6 @@ public class GamePlayScene : MonoBehaviour
             squareItemList.Add(squareItem);
             mapItemsList[i].setSquare(squareItem);
         }
-        isFilling = false;
     }    
 
    
@@ -606,6 +615,48 @@ public class GamePlayScene : MonoBehaviour
         SoundManager.I.PlaySFX(Global.SoundName.Hardest_LV_time_up);
         canvasGroupMap.interactable = false;
         popupResult.ShowPopup(false, txtScore.getFinalScore());
+    }
+    #endregion
+
+    #region confirmPopup
+
+    private void onClickBack()
+    {   //canvasGroupMap.interactable = false;
+        confirmPopup.OnShowConfirmPopup();
+    }
+    public void allowClickMap(bool isAllow)
+    {
+        canvasGroupMap.interactable = true;
+    }    
+    #endregion
+
+    #region configPopup
+    private void OnEndEditWidth(string value)
+    {
+        int inputValue;
+        if (int.TryParse(value, out inputValue))
+        {
+            inputValue = Mathf.Clamp(inputValue, minValue, maxValue);
+            ifWidth.text = inputValue.ToString();
+        }
+        else
+        {
+            ifWidth.text = minValue.ToString();
+        }
+    }
+
+    private void OnEndEditHeight(string value)
+    {
+        int inputValue;
+        if (int.TryParse(value, out inputValue))
+        {
+            inputValue = Mathf.Clamp(inputValue, minValue, maxValue);
+            ifHeight.text = inputValue.ToString();
+        }
+        else
+        {
+            ifHeight.text = minValue.ToString();
+        }
     }
     #endregion
 }
