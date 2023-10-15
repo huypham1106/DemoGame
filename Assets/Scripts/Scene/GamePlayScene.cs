@@ -6,6 +6,12 @@ using DG.Tweening;
 
 public class GamePlayScene : MonoBehaviour
 {
+    [Header("Common")]
+    [SerializeField] private CanvasGroup canvasGroup;
+    [SerializeField] private GameObject goReadyGo;
+    [SerializeField] private Text txtLevel;
+    [SerializeField] private Text txtGoalScore;
+
     [Header("ConfigPopUp")]
     [SerializeField] private InputField ifHeight;
     [SerializeField] private InputField ifWidth;
@@ -18,9 +24,22 @@ public class GamePlayScene : MonoBehaviour
     [SerializeField] private GameObject levelContent;
     [SerializeField] private ObjectPool poolSquare;
     [SerializeField] private Transform goBanner;
+    [SerializeField] private CanvasGroup canvasGroupMap;
+
+
+    [Header("Score")]
+    [SerializeField] private TextScore txtScore;
+
+    [Header("Time")]
+    [SerializeField] private TimeController time;
+
+    [Header("PopupResult")]
+    [SerializeField] private PopupResultController popupResult;
 
     private int width;
     private int height;
+    private int targetScore;
+    private int currentLevel;
     private int indexMap;
     private bool isFilling = false;
     private List<MapItem> mapItemsList = new List<MapItem>();
@@ -28,16 +47,97 @@ public class GamePlayScene : MonoBehaviour
     private HashSet<Square> squareItemListChoose = new HashSet<Square>();
     private List<Square> squareItemListChooseTemp = new List<Square>();
 
+    private const string timeCountDown = "120";
+
+    public static GamePlayScene Instance { get; private set; }
+
     private void Awake()
     {
+        if (Instance != null)
+        {
+            Destroy(gameObject);
+        }
+        else
+        {
+            Instance = this;
+        }
+
         btnPlay.onClick.AddListener(onClickPlay);
+
     }
 
     private void Start()
     {
-        goCongigPopup.SetActive(true);
+        currentLevel = UserData.Instance.CurrentLevel;
     }
 
+    private void OnEnable()
+    {
+        SoundManager.I.StopMusic();
+        SoundManager.I.PlayMusic(Global.SoundName.Hardest_BGM61);
+        goCongigPopup.SetActive(true);
+        goBanner.gameObject.SetActive(false);
+
+    }
+    private IEnumerator readyGoAnim()
+    {
+        SoundManager.I.PlaySFX(Global.SoundName.Hardest_LV_ready_go);
+        isFilling = true;
+        goReadyGo.SetActive(true);
+        yield return new WaitForSeconds(2f);
+        isFilling = false;
+        time.InitData(20, actionEndOfTime);
+        goReadyGo.SetActive(false);
+    }    
+
+    private void loadMap()
+    {
+        
+        int currentLevel = UserData.Instance.CurrentLevel;
+        MapSO map = Utilities.LoadMapSO(currentLevel);
+
+        txtLevel.text = map.level.ToString();
+        txtGoalScore.text = "Goal: "+map.targetScore.ToString();
+        targetScore = map.targetScore;
+
+    }
+
+    private void resetAll()
+    {
+        StopAllCoroutines();
+        canvasGroupMap.interactable = true;
+        txtScore.GetComponent<Text>().text = "0";
+        time.txtTime.text = timeCountDown;
+
+        popupResult.transform.gameObject.SetActive(false);
+        poolSquare.ReturnAllObjectToPool();
+        txtScore.resetScore();
+    }    
+    public void onClickPlay()
+    {
+        SoundManager.I.PlaySFX(Global.SoundName.Hardest_btn_pop);
+        resetAll();
+        loadMap();
+        goCongigPopup.SetActive(false);
+        goBanner.gameObject.SetActive(true);
+        popupResult.transform.gameObject.SetActive(false);
+        StartCoroutine(readyGoAnim());
+        generateMap();
+        generateSquare();
+    }
+
+    public void onClickNextLevel()
+    {
+
+        UserData.Instance.CurrentLevel = (currentLevel+=1);
+        onClickPlay();
+    }    
+    public void onClickReplay()
+    {
+        onClickPlay();
+    }    
+
+    #region map
     private void generateMap()
     {
         width = 0;
@@ -123,12 +223,7 @@ public class GamePlayScene : MonoBehaviour
         isFilling = false;
     }    
 
-    private void onClickPlay()
-    {
-        goCongigPopup.SetActive(false);
-        generateMap();
-        generateSquare();
-    }    
+   
 
     /*private void onClickSquareItem(Square squareItem)
     {
@@ -227,7 +322,95 @@ public class GamePlayScene : MonoBehaviour
     private void onClickSquareItem(Square squareItem)
     {
         if (isFilling) return;
-        //var setQuet = new List<int>();
+        isFilling = true;
+        switch (squareItem.typeSquare)
+        {
+            case TypeSquare.Red:
+            case TypeSquare.Green:
+            case TypeSquare.Blue:
+            case TypeSquare.Orange:
+            case TypeSquare.Yellow:
+                clickColorType(squareItem);
+                    break;
+            case TypeSquare.Bomb:
+                clickBombType(squareItem);
+                break;
+        }    
+        
+
+        Matching(squareItem);
+    }    
+    private void clickBombType(Square squareItem)
+    {
+        squareItemListChoose.Clear();
+        squareItemListChoose = getSquareItemAroundForBombType(squareItem);
+    }
+
+    private HashSet<Square> getSquareItemAroundForBombType(Square squareItem)
+    {
+        HashSet<Square> listSquare = new HashSet<Square>();
+        // right
+        if ((squareItem.x + 1) < height)
+        {
+            var squareTemp1 = mapItemsList[squareItem.indexSquare + 1].square;
+                listSquare.Add(squareTemp1);
+
+            if (squareTemp1.y - 1 >= 0)
+            {
+                var squareUpLeftTemp2 = mapItemsList[squareItem.indexSquare - height + 1].square;
+                listSquare.Add(squareUpLeftTemp2);
+            }
+
+            // down-left
+            if (squareTemp1.y + 1 < width)
+            {
+                var squareDownLeftTemp2 = mapItemsList[squareItem.indexSquare + height + 1].square;
+                listSquare.Add(squareDownLeftTemp2);
+            }
+        }
+
+        //left
+
+        if ((squareItem.x - 1) >= 0)
+        {
+            var squareTemp2 = mapItemsList[squareItem.indexSquare - 1].square;
+                listSquare.Add(squareTemp2);
+
+            // up-left
+            if(squareTemp2.y - 1 >=0)
+            {
+                var squareUpLeftTemp2 = mapItemsList[squareItem.indexSquare - height - 1].square;
+                listSquare.Add(squareUpLeftTemp2);
+            }    
+
+            // down-left
+            if(squareTemp2.y + 1 <width)
+            {
+                var squareDownLeftTemp2 = mapItemsList[squareItem.indexSquare + height - 1].square;
+                listSquare.Add(squareDownLeftTemp2);
+            }    
+        }
+        // up
+        if (squareItem.y - 1 >= 0)
+        {
+            var squareTemp3 = mapItemsList[squareItem.indexSquare - height].square;
+            listSquare.Add(squareTemp3);
+
+        }
+
+        //down
+
+        if (squareItem.y + 1 < width)
+        {
+            var squareTemp4 = mapItemsList[squareItem.indexSquare + height].square;
+                listSquare.Add(squareTemp4);
+        }
+        listSquare.Add(squareItem);
+        return listSquare;
+    }
+
+    private void clickColorType(Square squareItem)
+    {
         squareItemListChooseTemp.Clear();
         squareItemListChooseTemp.Add(squareItem);
         squareItemListChoose.Clear();
@@ -236,7 +419,7 @@ public class GamePlayScene : MonoBehaviour
             Square itemTemp = squareItemListChooseTemp[0];
             squareItemListChooseTemp.RemoveAt(0);
             squareItemListChoose.Add(itemTemp);
-            List<Square> keben = getSquareItemAround(itemTemp);
+            List<Square> keben = getSquareItemAroundForColorType(itemTemp);
             foreach (var p in keben)
             {
                 if (squareItemListChoose.Contains(p))
@@ -250,10 +433,14 @@ public class GamePlayScene : MonoBehaviour
             }
         }
 
-        Matching();
+        if(squareItemListChoose.Count > 5)
+        {
+            squareItemListChoose.Remove(squareItem);
+            squareItem.setBombType();
+        }    
     }    
 
-    private List<Square> getSquareItemAround(Square squareItem)
+    private List<Square> getSquareItemAroundForColorType(Square squareItem)
     {
         List<Square> listSquare = new List<Square>();
         // right
@@ -301,12 +488,21 @@ public class GamePlayScene : MonoBehaviour
         return listSquare;       
     }    
 
-    private void Matching()
+    private void Matching(Square squareItem)
     {
         if(squareItemListChoose.Count >1)
         {
             Debug.Log("list choose : " + squareItemListChoose.Count);
             isFilling = true;
+            switch (squareItem.typeSquare)
+            {
+                case TypeSquare.Bomb:
+                    SoundManager.I.PlaySFX(Global.SoundName.Hardest_LV11_Lucky_Wheel_Reward);
+                    break;
+                default:
+                    SoundManager.I.PlaySFX(Global.SoundName.Hardest_LV_start);
+                    break;
+            }        
             foreach (var square in squareItemListChoose)
             {
                 square.transform.DOScale(0f, 0.3f).OnComplete(() => { 
@@ -315,10 +511,19 @@ public class GamePlayScene : MonoBehaviour
                 square.typeSquare = TypeSquare.None;
                 mapItemsList[square.indexSquare].isEmpty = true;
             }
+            txtScore.AddValue(squareItemListChoose.Count);
         }
+        else
+        {
+            squareItem.setErrorChoose();
+            isFilling = false;
+            return;
+        }   
+
         squareItemListChoose.Clear();
         StartCoroutine(FullFillMap());
     } 
+
     
     private IEnumerator FullFillMap()
     {
@@ -365,9 +570,42 @@ public class GamePlayScene : MonoBehaviour
                 //}   
             }
         }
-        
         yield return new WaitForSeconds(0.5f);
-        yield return new WaitForEndOfFrame();
+        checkMeetCondition();
         isFilling = false;
+    }
+
+    private void checkMeetCondition()
+    {
+        int score = int.Parse(txtScore.GetComponent<Text>().text);
+        if (score >= targetScore)
+        {
+            //SoundManager.I.PlayMusic(Global.SoundName.Hardest_LV_Win);
+            int bestScore = UserData.Instance.BestScore;
+            int currentScore = int.Parse(txtScore.getFinalScore());
+            if(currentScore > bestScore)
+            {
+                UserData.Instance.BestScore = currentScore;
+            }
+            
+
+            StopAllCoroutines();
+            time.stopCountDown();
+            canvasGroupMap.interactable = false;
+            popupResult.ShowPopup(true, txtScore.getFinalScore(), time.getCurrentTime());
+
+            
+        }    
     }    
+    #endregion
+
+    #region time
+
+    private void actionEndOfTime()
+    {
+        SoundManager.I.PlaySFX(Global.SoundName.Hardest_LV_time_up);
+        canvasGroupMap.interactable = false;
+        popupResult.ShowPopup(false, txtScore.getFinalScore());
+    }
+    #endregion
 }

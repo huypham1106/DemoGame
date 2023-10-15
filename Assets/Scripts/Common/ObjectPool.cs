@@ -48,10 +48,8 @@ public class ObjectPool : MonoBehaviour
     {
         for (int i = 0; i < pooledObjects.Count; i++)
         {
-            if (pooledObjects[i].activeInHierarchy)
-            {
+                pooledObjects[i].transform.SetParent(this.transform);
                 pooledObjects[i].SetActive(false);
-            }
         }
     }
 }

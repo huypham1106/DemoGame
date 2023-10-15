@@ -21,5 +21,19 @@ public static class Utilities
         image.color = newColor;
     }
 
+    public static void setTextColor(Text txt, float r, float g, float b, float a)
+    {
+
+        Color newColor = new Color(r / 255f, g / 255f, b / 255f, a / 255f);
+
+        txt.color = newColor;
+    }
+
+    public static MapSO LoadMapSO(int level)
+    {
+        string path = "MapData/" + level.ToString();
+        MapSO map = Resources.Load<MapSO>(path);
+        return map;
+    }
      
 }

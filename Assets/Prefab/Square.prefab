@@ -13,8 +13,8 @@ GameObject:
   - component: {fileID: 1246718792683073700}
   - component: {fileID: 8078333953812135619}
   - component: {fileID: 800968285060521408}
-  - component: {fileID: 8606937499808807407}
-  - component: {fileID: 4477612622776851827}
+  - component: {fileID: 320392516510922397}
+  - component: {fileID: 5255138576858846869}
   m_Layer: 5
   m_Name: Square
   m_TagString: Untagged
@@ -91,10 +91,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f863833d78157cc4990c21deec4d5327, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  sprites:
+  spritesColor:
   - {fileID: 21300000, guid: 696611689bed4e64cb9105a68f9843b3, type: 3}
-  - {fileID: 21300000, guid: d9bd804561d706546bdaf19945ef3b3a, type: 3}
   - {fileID: 21300000, guid: c0a7d9df1e5c87f4c941df3485f5ddb7, type: 3}
+  - {fileID: 21300000, guid: 3463db5277bfce84685302fa9388470d, type: 3}
+  - {fileID: 21300000, guid: 86c1f38fe278b7d428701d0d16a4991b, type: 3}
+  - {fileID: 21300000, guid: d9bd804561d706546bdaf19945ef3b3a, type: 3}
+  spritesBooster:
+  - {fileID: 21300000, guid: 29ceb8aaf691eb149966402904c4a832, type: 3}
   imgSquare: {fileID: 1246718792683073700}
   btnSquare: {fileID: 800968285060521408}
   x: 0
@@ -145,7 +149,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
---- !u!223 &8606937499808807407
+--- !u!223 &320392516510922397
 Canvas:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -166,7 +170,7 @@ Canvas:
   m_SortingLayerID: 0
   m_SortingOrder: 10
   m_TargetDisplay: 0
---- !u!114 &4477612622776851827
+--- !u!114 &5255138576858846869
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}

@@ -20,13 +20,20 @@ public class MainMenuScene : MonoBehaviour
         init();
     }
 
+    private void OnEnable()
+    {
+        SoundManager.I.StopMusic();
+        SoundManager.I.PlayMusic(Global.SoundName.Hardest_BGM81);
+    }
+
     private void init()
     {
-        
+
     }
 
     private void onClickBtnPlay()
     {
+        SoundManager.I.PlaySFX(Global.SoundName.Hardest_btn_pop);
         SceneManager.LoadScene(Global.SceneName.s_gamePlay);
     }
 }

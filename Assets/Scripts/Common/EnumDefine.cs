@@ -6,4 +6,5 @@ public enum TypeSquare
     Blue = 3,
     Yellow = 4,
     Orange = 5,
+    Bomb = 6
 }
